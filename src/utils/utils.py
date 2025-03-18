@@ -21,7 +21,8 @@ PROVIDER_DISPLAY_NAMES = {
     "deepseek": "DeepSeek",
     "google": "Google",
     "alibaba": "Alibaba",
-    "moonshot": "MoonShot"
+    "moonshot": "MoonShot",
+    "openrouter": "OpenRouter"
 }
 
 def get_llm_model(provider: str, **kwargs):
@@ -45,10 +46,12 @@ def get_llm_model(provider: str, **kwargs):
             base_url = kwargs.get("base_url")
 
         return ChatAnthropic(
-            model_name=kwargs.get("model_name", "claude-3-5-sonnet-20241022"),
+            model=kwargs.get("model_name", "claude-3-5-sonnet-20241022"),
             temperature=kwargs.get("temperature", 0.0),
-            base_url=base_url,
-            api_key=api_key,
+            anthropic_api_key=api_key,
+            max_tokens=kwargs.get("max_tokens", 1024),
+            anthropic_api_url=base_url,
+            max_retries=kwargs.get("max_retries", 2)
         )
     elif provider == 'mistral':
         if not kwargs.get("base_url", ""):
@@ -63,8 +66,9 @@ def get_llm_model(provider: str, **kwargs):
         return ChatMistralAI(
             model=kwargs.get("model_name", "mistral-large-latest"),
             temperature=kwargs.get("temperature", 0.0),
-            base_url=base_url,
-            api_key=api_key,
+            mistral_api_key=api_key,
+            max_tokens=kwargs.get("max_tokens", 1024),
+            endpoint=base_url
         )
     elif provider == "openai":
         if not kwargs.get("base_url", ""):
@@ -73,9 +77,9 @@ def get_llm_model(provider: str, **kwargs):
             base_url = kwargs.get("base_url")
 
         return ChatOpenAI(
-            model=kwargs.get("model_name", "gpt-4o"),
+            model_name=kwargs.get("model_name", "gpt-4o"),
             temperature=kwargs.get("temperature", 0.0),
-            base_url=base_url,
+            openai_api_base=base_url,
             api_key=api_key,
         )
     elif provider == "deepseek":
@@ -93,16 +97,17 @@ def get_llm_model(provider: str, **kwargs):
             )
         else:
             return ChatOpenAI(
-                model=kwargs.get("model_name", "deepseek-chat"),
+                model_name=kwargs.get("model_name", "deepseek-chat"),
                 temperature=kwargs.get("temperature", 0.0),
-                base_url=base_url,
+                openai_api_base=base_url,
                 api_key=api_key,
             )
     elif provider == "google":
         return ChatGoogleGenerativeAI(
-            model=kwargs.get("model_name", "gemini-2.0-flash-exp"),
+            model=kwargs.get("model_name", "gemini-2.0-flash"),
             temperature=kwargs.get("temperature", 0.0),
             google_api_key=api_key,
+            max_output_tokens=kwargs.get("max_tokens", 1024)
         )
     elif provider == "ollama":
         if not kwargs.get("base_url", ""):
@@ -132,6 +137,7 @@ def get_llm_model(provider: str, **kwargs):
             base_url = kwargs.get("base_url")
         api_version = kwargs.get("api_version", "") or os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")
         return AzureChatOpenAI(
+            deployment_name=kwargs.get("model_name", "gpt-4o"),
             model=kwargs.get("model_name", "gpt-4o"),
             temperature=kwargs.get("temperature", 0.0),
             api_version=api_version,
@@ -145,18 +151,29 @@ def get_llm_model(provider: str, **kwargs):
             base_url = kwargs.get("base_url")
 
         return ChatOpenAI(
-            model=kwargs.get("model_name", "qwen-plus"),
+            model_name=kwargs.get("model_name", "qwen-plus"),
             temperature=kwargs.get("temperature", 0.0),
-            base_url=base_url,
+            openai_api_base=base_url,
             api_key=api_key,
         )
-
     elif provider == "moonshot":
         return ChatOpenAI(
-            model=kwargs.get("model_name", "moonshot-v1-32k-vision-preview"),
+            model_name=kwargs.get("model_name", "moonshot-v1-32k-vision-preview"),
             temperature=kwargs.get("temperature", 0.0),
-            base_url=os.getenv("MOONSHOT_ENDPOINT"),
+            openai_api_base=os.getenv("MOONSHOT_ENDPOINT"),
             api_key=os.getenv("MOONSHOT_API_KEY"),
+        )
+    elif provider == "openrouter":
+        if not kwargs.get("base_url", ""):
+            base_url = os.getenv("OPENROUTER_ENDPOINT", "https://openrouter.ai/api/v1")
+        else:
+            base_url = kwargs.get("base_url")
+            
+        return ChatOpenAI(
+            model_name=kwargs.get("model_name", "openai/gpt-4o-mini"),
+            temperature=kwargs.get("temperature", 0.0),
+            openai_api_base=base_url,
+            api_key=api_key,
         )
     else:
         raise ValueError(f"Unsupported provider: {provider}")
@@ -166,12 +183,13 @@ model_names = {
     "anthropic": ["claude-3-5-sonnet-20241022", "claude-3-5-sonnet-20240620", "claude-3-opus-20240229"],
     "openai": ["gpt-4o", "gpt-4", "gpt-3.5-turbo", "o3-mini"],
     "deepseek": ["deepseek-chat", "deepseek-reasoner"],
-    "google": ["gemini-2.0-flash", "gemini-2.0-flash-thinking-exp", "gemini-1.5-flash-latest", "gemini-1.5-flash-8b-latest", "gemini-2.0-flash-thinking-exp-01-21", "gemini-2.0-pro-exp-02-05"],
+    "google": ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-thinking", "gemini-2.0-pro-vision"],
     "ollama": ["qwen2.5:7b", "qwen2.5:14b", "qwen2.5:32b", "qwen2.5-coder:14b", "qwen2.5-coder:32b", "llama2:7b", "deepseek-r1:14b", "deepseek-r1:32b"],
     "azure_openai": ["gpt-4o", "gpt-4", "gpt-3.5-turbo"],
     "mistral": ["pixtral-large-latest", "mistral-large-latest", "mistral-small-latest", "ministral-8b-latest"],
     "alibaba": ["qwen-plus", "qwen-max", "qwen-turbo", "qwen-long"],
     "moonshot": ["moonshot-v1-32k-vision-preview", "moonshot-v1-8k-vision-preview"],
+    "openrouter": ["openai/gpt-4o-mini", "openai/gpt-4o-mini-search-preview", "google/gemini-2.0-flash-001", "google/gemini-2.0-pro-exp-02-05:free", "qwen/qwen-vl-plus"],
 }
 
 # Callback to update the model name dropdown based on the selected provider

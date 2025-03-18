@@ -13,7 +13,7 @@ We would like to officially thank [WarmShao](https://github.com/warmshao) for hi
 
 **WebUI:** is built on Gradio and supports most of `browser-use` functionalities. This UI is designed to be user-friendly and enables easy interaction with the browser agent.
 
-**Expanded LLM Support:** We've integrated support for various Large Language Models (LLMs), including: Google, OpenAI, Azure OpenAI, Anthropic, DeepSeek, Ollama etc. And we plan to add support for even more models in the future.
+**Expanded LLM Support:** We've integrated support for various Large Language Models (LLMs), including: Google, OpenAI, Azure OpenAI, Anthropic, DeepSeek, Ollama, OpenRouter etc. And we plan to add support for even more models in the future.
 
 **Custom Browser Support:** You can use your own browser with our tool, eliminating the need to re-login to sites or deal with other authentication challenges. This feature also supports high-definition screen recording.
 
@@ -81,6 +81,42 @@ copy .env.example .env
 cp .env.example .env
 ```
 2. Open `.env` in your preferred text editor and add your API keys and other settings
+
+### Configuration for Google Gemini 2.0-flash
+
+To use Google's Gemini 2.0-flash model, add your API key to the `.env` file:
+
+```
+GOOGLE_API_KEY=your_api_key_here
+```
+
+Example of Gemini 2.0-flash API usage:
+
+```bash
+curl "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=GEMINI_API_KEY" \
+-H 'Content-Type: application/json' \
+-X POST \
+-d '{
+  "contents": [{
+    "parts":[{"text": "Explain how AI works"}]
+    }]
+   }'
+```
+
+### Configuration for OpenRouter
+
+OpenRouter provides access to various models from different providers through a single API. Add your API key to the `.env` file:
+
+```
+OPENROUTER_API_KEY=your_api_key_here
+```
+
+Available models include:
+- openai/gpt-4o-mini
+- openai/gpt-4o-mini-search-preview
+- google/gemini-2.0-flash-001
+- google/gemini-2.0-pro-exp-02-05:free
+- qwen/qwen-vl-plus
 
 ### Option 2: Docker Installation
 
@@ -173,6 +209,7 @@ CHROME_PERSISTENT_SESSION=true docker compose up --build
      OPENAI_API_KEY=your_key_here
      ANTHROPIC_API_KEY=your_key_here
      GOOGLE_API_KEY=your_key_here
+     OPENROUTER_API_KEY=your_key_here
 
      # Browser Settings
      CHROME_PERSISTENT_SESSION=true   # Set to true to keep browser open between AI tasks
